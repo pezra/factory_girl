@@ -226,6 +226,18 @@ Calling Factory.create will invoke both after_build and after_create callbacks.
 
 Also, like standard attributes, child factories will inherit (and can define additional) callbacks from their parent factory.
 
+== Factory rules
+
+Factory name can also be regular expressions, rather than simple names.  This allows a single factory to produce multiple variations of object.  For example, if users each have a role you could create a user factory per role to create user with particular permissions.  However, this is quite repetitious if you have more than a couple of roles.  Using a regexp as the factory name can help.
+
+  Factory.define /(.*)_user/, :parent => :user do |u|
+    u.role  {|a, role_name|  Role.find_by_name(role_name) }
+  end
+
+This factory rule is invoked whenever a factory is requested whose name matches the rule.  For example, +Factory(:admin_user)+ would return a user with the Role named 'admin'.  Whenever a new role is defined you can factory a user of that role with no additional code.
+
+The capture groups in the regular expression a used to extract the cogent parts of run-time factory name.  These parameter are then passed to any dynamic attribute value calculator that requests them.
+
 == Alternate Syntaxes
 
 Users' tastes for syntax vary dramatically, but most users are looking for a common feature set. Because of this, factory_girl supports "syntax layers" which provide alternate interfaces. See Factory::Syntax for information about the various layers available. For example, the Machinist-style syntax is popular:

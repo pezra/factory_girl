@@ -3,7 +3,8 @@ module FactoryGirl
     class Stub < Proxy #:nodoc:
       @@next_id = 1000
 
-      def initialize(klass)
+      def initialize(klass, production_parameters)
+        super
         @instance = klass.new
         @instance.id = next_id
         @instance.instance_eval do
@@ -43,12 +44,12 @@ module FactoryGirl
 
       def associate(name, factory_name, overrides)
         factory = FactoryGirl.factory_by_name(factory_name)
-        set(name, factory.run(Proxy::Stub, overrides))
+        set(name, factory.run(Proxy::Stub, factory_name, overrides))
       end
 
       def association(factory_name, overrides = {})
         factory = FactoryGirl.factory_by_name(factory_name)
-        factory.run(Proxy::Stub, overrides)
+        factory.run(Proxy::Stub, factory_name, overrides)
       end
 
       def result

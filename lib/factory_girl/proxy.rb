@@ -3,7 +3,10 @@ module FactoryGirl
 
     attr_reader :callbacks
 
-    def initialize(klass)
+    attr_reader :production_parameters
+
+    def initialize(klass, production_parameters)
+      @production_parameters = production_parameters
     end
 
     def get(attribute)

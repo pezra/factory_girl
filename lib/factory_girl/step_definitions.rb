@@ -24,11 +24,11 @@ end
 
 World(FactoryGirlStepHelpers)
 
-FactoryGirl.factories.values.each do |factory|
+FactoryGirl.factories.each do |factory|
   Given /^the following (?:#{factory.human_name}|#{factory.human_name.pluralize}) exists?:$/ do |table|
     table.hashes.each do |human_hash|
       attributes = convert_human_hash_to_attribute_hash(human_hash, factory.associations)
-      factory.run(FactoryGirl::Proxy::Create, attributes)
+      factory.run(FactoryGirl::Proxy::Create, factory.factory_name, attributes)
     end
   end
 

@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe FactoryGirl::Proxy::AttributesFor do
   before do
-    @proxy = FactoryGirl::Proxy::AttributesFor.new(@class)
+    @proxy = FactoryGirl::Proxy::AttributesFor.new(@class, [])
   end
 
   describe "when asked to associate with another factory" do

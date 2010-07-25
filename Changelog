@@ -1,3 +1,6 @@
+NEXT
+  Factory names are parameterizable.
+	
 1.1.4 (November 28, 2008)
   Factory.build now uses Factory.create for associations of the built object
   Factory definitions are now detected in subdirectories, such as

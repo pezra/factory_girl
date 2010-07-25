@@ -2,7 +2,11 @@ require 'spec_helper'
 
 describe FactoryGirl::Proxy do
   before do
-    @proxy = FactoryGirl::Proxy.new(Class.new)
+    @proxy = FactoryGirl::Proxy.new(Class.new, ['a-production-param'])
+  end
+
+  it "should know the production parameters" do 
+    @proxy.production_parameters.should == ['a-production-param']
   end
 
   it "should do nothing when asked to set an attribute to a value" do

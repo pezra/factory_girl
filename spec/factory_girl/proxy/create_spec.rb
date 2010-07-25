@@ -11,7 +11,7 @@ describe FactoryGirl::Proxy::Create do
     stub(@instance, :owner=)
     stub(@instance).save!
 
-    @proxy = FactoryGirl::Proxy::Create.new(@class)
+    @proxy = FactoryGirl::Proxy::Create.new(@class, [])
   end
 
   it "should instantiate the class" do
@@ -29,7 +29,7 @@ describe FactoryGirl::Proxy::Create do
     end
 
     it "should create the associated instance" do
-      @associated_factory.should have_received.run(FactoryGirl::Proxy::Create, @overrides)
+      @associated_factory.should have_received.run(FactoryGirl::Proxy::Create, :user, @overrides)
     end
 
     it "should set the associated instance" do
@@ -44,7 +44,7 @@ describe FactoryGirl::Proxy::Create do
     stub(associated_factory).run { association }
     overrides = { 'attr' => 'value' }
     @proxy.association(:user, overrides).should == association
-    associated_factory.should have_received.run(FactoryGirl::Proxy::Create, overrides)
+    associated_factory.should have_received.run(FactoryGirl::Proxy::Create, :user, overrides)
   end
 
   describe "when asked for the result" do

@@ -50,9 +50,9 @@ end
 describe "defining a factory" do
   before do
     @name    = :user
-    @factory = "factory"
+    @factory = Object.new
     @proxy   = "proxy"
-    stub(@factory).factory_name { @name }
+    stub(@factory).factory_name { @name.to_s }
     @options = { :class => 'magic' }
     stub(FactoryGirl::Factory).new { @factory }
     stub(FactoryGirl::DefinitionProxy).new { @proxy }
@@ -73,7 +73,7 @@ describe "defining a factory" do
 
   it "should add the factory to the list of factories" do
     Factory.define(@name) {|f| }
-    @factory.should == FactoryGirl.factories[@name]
+    FactoryGirl.factories.should include(@factory)
   end
 
   it "should allow a factory to be found by name" do
@@ -85,40 +85,41 @@ end
 describe "after defining a factory" do
   before do
     @name    = :user
-    @factory = "factory"
+    @factory = Object.new
+    stub(@factory).factory_name {'user'}
 
-    FactoryGirl.factories[@name] = @factory
+    FactoryGirl.factories << @factory
   end
 
   it "should use Proxy::AttributesFor for Factory.attributes_for" do
-    mock(@factory).run(FactoryGirl::Proxy::AttributesFor, :attr => 'value') { 'result' }
+    mock(@factory).run(FactoryGirl::Proxy::AttributesFor, :user, :attr => 'value') { 'result' }
     Factory.attributes_for(@name, :attr => 'value').should == 'result'
   end
 
   it "should use Proxy::Build for Factory.build" do
-    mock(@factory).run(FactoryGirl::Proxy::Build, :attr => 'value') { 'result' }
+    mock(@factory).run(FactoryGirl::Proxy::Build, :user, :attr => 'value') { 'result' }
     Factory.build(@name, :attr => 'value').should == 'result'
   end
 
   it "should use Proxy::Create for Factory.create" do
-    mock(@factory).run(FactoryGirl::Proxy::Create, :attr => 'value') { 'result' }
+    mock(@factory).run(FactoryGirl::Proxy::Create, :user, :attr => 'value') { 'result' }
     Factory.create(@name, :attr => 'value').should == 'result'
   end
 
   it "should use Proxy::Stub for Factory.stub" do
-    mock(@factory).run(FactoryGirl::Proxy::Stub, :attr => 'value') { 'result' }
+    mock(@factory).run(FactoryGirl::Proxy::Stub, :user, :attr => 'value') { 'result' }
     Factory.stub(@name, :attr => 'value').should == 'result'
   end
 
   it "should use default strategy option as Factory.default_strategy" do
     stub(@factory).default_strategy { :create }
-    mock(@factory).run(FactoryGirl::Proxy::Create, :attr => 'value') { 'result' }
+    mock(@factory).run(FactoryGirl::Proxy::Create, :user, :attr => 'value') { 'result' }
     Factory.default_strategy(@name, :attr => 'value').should == 'result'
   end
 
   it "should use the default strategy for the global Factory method" do
     stub(@factory).default_strategy { :create }
-    mock(@factory).run(FactoryGirl::Proxy::Create, :attr => 'value') { 'result' }
+    mock(@factory).run(FactoryGirl::Proxy::Create, :user, :attr => 'value') { 'result' }
     Factory(@name, :attr => 'value').should == 'result'
   end
 
@@ -133,6 +134,44 @@ describe "after defining a factory" do
       lambda { Factory.send(method, @name.to_sym) }.should_not raise_error
     end
   end
+end
+
+describe "defining a parametrized factory" do
+  it "should allow regexp as factory_name" do 
+    lambda {
+      Factory.define(/my_(.*)_object/){|jig| }
+    }.should_not raise_error
+  end
+end
+
+describe "using a parametrized factory" do 
+  before do 
+    target_class = Class.new do 
+      attr_accessor :name
+      def save!; true; end
+    end
+
+    @name_block = lambda {|proxy, role| "Mr #{role.capitalize}"}      
+
+    @factory = Factory.define /(.*)_user/, :class => target_class do |product|
+      product.name &@name_block
+    end
+  end
+
+  it "should be lookupable" do
+    Factory.factory_by_name('admin_user').should == @factory
+  end
+
+  it "should pass production parameters to attr calc block" do 
+    mock(@name_block).call(anything, 'admin')
+
+    Factory('admin_user')
+  end
+
+  it "should use parameter to build name" do 
+    Factory('admin_user').name.should == 'Mr Admin'
+  end
+
 end
 
 describe "defining a sequence" do

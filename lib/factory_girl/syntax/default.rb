@@ -47,7 +47,7 @@ module FactoryGirl
         # A set of attributes that can be used to build an instance of the class
         # this factory generates.
         def self.attributes_for(name, overrides = {})
-          FactoryGirl.factory_by_name(name).run(Proxy::AttributesFor, overrides)
+          FactoryGirl.factory_by_name(name).run(Proxy::AttributesFor, name, overrides)
         end
 
         # Generates and returns an instance from this factory. Attributes can be
@@ -63,7 +63,7 @@ module FactoryGirl
         # An instance of the class this factory generates, with generated attributes
         # assigned.
         def self.build(name, overrides = {})
-          FactoryGirl.factory_by_name(name).run(Proxy::Build, overrides)
+          FactoryGirl.factory_by_name(name).run(Proxy::Build, name, overrides)
         end
 
         # Generates, saves, and returns an instance from this factory. Attributes can
@@ -83,7 +83,7 @@ module FactoryGirl
         # A saved instance of the class this factory generates, with generated
         # attributes assigned.
         def self.create(name, overrides = {})
-          FactoryGirl.factory_by_name(name).run(Proxy::Create, overrides)
+          FactoryGirl.factory_by_name(name).run(Proxy::Create, name, overrides)
         end
 
         # Generates and returns an object with all attributes from this factory
@@ -99,7 +99,7 @@ module FactoryGirl
         # Returns: +Object+
         # An object with generated attributes stubbed out.
         def self.stub(name, overrides = {})
-          FactoryGirl.factory_by_name(name).run(Proxy::Stub, overrides)
+          FactoryGirl.factory_by_name(name).run(Proxy::Stub, name, overrides)
         end
 
         # Executes the default strategy for the given factory. This is usually create,

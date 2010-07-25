@@ -2,21 +2,37 @@ require 'spec_helper'
 
 describe FactoryGirl::Factory, "registering a factory" do
   before do
-    @name    = :user
-    @factory = "factory"
-    stub(@factory).factory_name { @name }
   end
 
-  it "should add the factory to the list of factories" do
+  it "should add the factory to the list of factories with symbol name" do
+    @factory = FactoryGirl::Factory.new(:user)
+
     FactoryGirl.register_factory(@factory)
-    FactoryGirl.factory_by_name(@name).should == @factory
+    FactoryGirl.factory_by_name(:user).should == @factory
+  end
+
+  it "should add parametrized factory to the list of factories" do
+    @factory = FactoryGirl::Factory.new(/(.*)_user/)
+
+    FactoryGirl.register_factory(@factory)
+    FactoryGirl.factory_by_name(:admin_user).should == @factory
+  end
+
+  it "should add the factory to the list of factories with string name" do
+    @factory = FactoryGirl::Factory.new('user')
+    
+    FactoryGirl.register_factory(@factory)
+    FactoryGirl.factory_by_name('user').should == @factory
   end
 
   it "should not allow a duplicate factory definition" do
+    @factory = FactoryGirl::Factory.new(:user)
+
     lambda {
       2.times { FactoryGirl.register_factory(@factory) }
     }.should raise_error(FactoryGirl::DuplicateDefinitionError)
   end
+
 end
 
 describe FactoryGirl::Factory do
@@ -29,7 +45,7 @@ describe FactoryGirl::Factory do
   end
 
   it "should have a factory name" do
-    @factory.factory_name.should == @name
+    @factory.factory_name.should == "user"
   end
 
   it "should have a build class" do
@@ -74,18 +90,18 @@ describe FactoryGirl::Factory do
     end
 
     it "should create the right proxy using the build class when running" do
-      mock(FactoryGirl::Proxy::Build).new(@factory.build_class) { @proxy }
-      @factory.run(FactoryGirl::Proxy::Build, {})
+      mock(FactoryGirl::Proxy::Build).new(@factory.build_class, []) { @proxy }
+      @factory.run(FactoryGirl::Proxy::Build, 'user', {})
     end
 
     it "should add the attribute to the proxy when running" do
       mock(@attribute).add_to(@proxy)
-      @factory.run(FactoryGirl::Proxy::Build, {})
+      @factory.run(FactoryGirl::Proxy::Build, 'user', {})
     end
 
     it "should return the result from the proxy when running" do
       mock(@proxy).result() { 'result' }
-      @factory.run(FactoryGirl::Proxy::Build, {}).should == 'result'
+      @factory.run(FactoryGirl::Proxy::Build, 'user', {}).should == 'result'
     end
   end
 
@@ -116,21 +132,21 @@ describe FactoryGirl::Factory do
     it "should return the overridden value in the generated attributes" do
       attr = FactoryGirl::Attribute::Static.new(@name, 'The price is wrong, Bob!')
       @factory.define_attribute(attr)
-      result = @factory.run(FactoryGirl::Proxy::AttributesFor, @hash)
+      result = @factory.run(FactoryGirl::Proxy::AttributesFor, 'user', @hash)
       result[@name].should == @value
     end
 
     it "should not call a lazy attribute block for an overridden attribute" do
       attr = FactoryGirl::Attribute::Dynamic.new(@name, lambda { flunk })
       @factory.define_attribute(attr)
-      result = @factory.run(FactoryGirl::Proxy::AttributesFor, @hash)
+      result = @factory.run(FactoryGirl::Proxy::AttributesFor, 'user', @hash)
     end
 
     it "should override a symbol parameter with a string parameter" do
       attr = FactoryGirl::Attribute::Static.new(@name, 'The price is wrong, Bob!')
       @factory.define_attribute(attr)
       @hash = { @name.to_s => @value }
-      result = @factory.run(FactoryGirl::Proxy::AttributesFor, @hash)
+      result = @factory.run(FactoryGirl::Proxy::AttributesFor, 'user', @hash)
       result[@name].should == @value
     end
   end
@@ -140,6 +156,7 @@ describe FactoryGirl::Factory do
       @factory.define_attribute(FactoryGirl::Attribute::Static.new(:test, 'original'))
       Factory.alias(/(.*)_alias/, '\1')
       @result = @factory.run(FactoryGirl::Proxy::AttributesFor,
+                             'user',
                              :test_alias => 'new')
     end
 
@@ -225,7 +242,7 @@ describe FactoryGirl::Factory, "when defined with a class instead of a name" do
   end
 
   it "should guess the name from the class" do
-    @factory.factory_name.should == @name
+    @factory.factory_name.should == 'argument_error'
   end
 
   it "should use the class as the build class" do
@@ -255,22 +272,11 @@ describe FactoryGirl::Factory, "with a name ending in s" do
   end
 
   it "should have a factory name" do
-    @factory.factory_name.should == @name
+    @factory.factory_name.should == @name.to_s
   end
 
   it "should have a build class" do
     @factory.build_class.should == @class
-  end
-end
-
-describe FactoryGirl::Factory, "with a string for a name" do
-  before do
-    @name    = :string
-    @factory = FactoryGirl::Factory.new(@name.to_s) {}
-  end
-
-  it "should convert the string to a symbol" do
-    @factory.factory_name.should == @name
   end
 end
 
@@ -281,8 +287,8 @@ describe FactoryGirl::Factory, "registered with a string name" do
     FactoryGirl.register_factory(@factory)
   end
 
-  it "should store the factory using a symbol" do
-    FactoryGirl.factories[@name].should == @factory
+  it "should store the factory" do
+    FactoryGirl.factories.should include(@factory)
   end
 end
 

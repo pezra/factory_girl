@@ -12,7 +12,8 @@ describe FactoryGirl::Attribute::Dynamic do
   end
 
   it "should call the block to set a value" do
-    @proxy = "proxy"
+    @proxy = stub!.set
+    stub(@proxy).production_parameters {[]}
     stub(@proxy).set
     @attr.add_to(@proxy)
     @proxy.should have_received.set(@name, 'value')
@@ -27,6 +28,17 @@ describe FactoryGirl::Attribute::Dynamic do
     @proxy.should have_received.set(:user, @proxy)
   end
 
+  it "should yield the proxy and factory parameters to the block when adding its value to a proxy" do
+    @block = lambda {|a, arg1, arg2| a }
+    @attr  = FactoryGirl::Attribute::Dynamic.new(:user, @block)
+    @proxy = "proxy"
+    stub(@proxy).set
+    mock(@proxy).production_parameters {['test-param1', 'test-param2']}
+    mock(@block).call(@proxy, 'test-param1', 'test-param2') {'expected value'}
+
+    @attr.add_to(@proxy)
+  end
+
   it "should raise an error when defining an attribute writer" do
     lambda {
       FactoryGirl::Attribute::Dynamic.new('test=', nil)
@@ -38,6 +50,7 @@ describe FactoryGirl::Attribute::Dynamic do
     block = lambda { Factory.sequence(:email) }
     attr = FactoryGirl::Attribute::Dynamic.new(:email, block)
     proxy = stub!.set.subject
+    stub(proxy).production_parameters
     lambda {
       attr.add_to(proxy)
     }.should raise_error(FactoryGirl::SequenceAbuseError)

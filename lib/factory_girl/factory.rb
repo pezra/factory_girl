@@ -3,18 +3,23 @@ module FactoryGirl
     attr_accessor :factories #:nodoc:
   end
 
-  self.factories = {}
+  self.factories = []
 
   def self.factory_by_name(name)
-    factories[name.to_sym] or raise ArgumentError.new("No such factory: #{name.to_s}")
+    name = name.to_s
+
+    factories.find{|factory| factory.factory_name === name} or 
+      raise ArgumentError.new("No such factory: #{name}")
   end
 
   def self.register_factory(factory)
     name = factory.factory_name
-    if self.factories[name]
+    if self.factories.any?{|existing_factory| existing_factory.factory_name == name}
       raise DuplicateDefinitionError, "Factory already defined: #{name}"
     end
-    self.factories[name] = factory
+    self.factories << factory
+
+    factory
   end
 
   # Raised when a factory is defined that attempts to instantiate itself.
@@ -68,7 +73,7 @@ module FactoryGirl
       if attribute_defined?(name)
         raise AttributeDefinitionError, "Attribute already defined: #{name}"
       end
-      if attribute.respond_to?(:factory) && attribute.factory == self.factory_name
+      if attribute.respond_to?(:factory) && self.factory_name === attribute.factory.to_s
         raise AssociationDefinitionError, "Self-referencing association '#{name}' in factory '#{self.factory_name}'"
       end
       @attributes << attribute
@@ -81,8 +86,8 @@ module FactoryGirl
       @attributes << Attribute::Callback.new(name.to_sym, block)
     end
 
-    def run (proxy_class, overrides) #:nodoc:
-      proxy = proxy_class.new(build_class)
+    def run (proxy_class, invocation_name, overrides) #:nodoc:
+      proxy = proxy_class.new(build_class, production_parameters_from(invocation_name))
       overrides = symbolize_keys(overrides)
       overrides.each {|attr, val| proxy.set(attr, val) }
       passed_keys = overrides.keys.collect {|k| FactoryGirl.aliases_for(k) }.flatten
@@ -119,11 +124,27 @@ module FactoryGirl
       end
     end
 
-    def factory_name_for (class_or_to_s)
-      if class_or_to_s.respond_to?(:to_sym)
-        class_or_to_s.to_sym
+    # Returns parameters extracted from a invocation name of a
+    # parametrized factory.  Returns empty array if factory is not
+    # parametrized.
+    def production_parameters_from(invocation_name)
+      if factory_name.respond_to? :match
+        factory_name.match(invocation_name.to_s)[1..-1]
       else
-        class_name_to_variable_name(class_or_to_s).to_sym
+        []
+      end
+    end
+
+    def factory_name_for (class_or_to_s)
+      case class_or_to_s
+      when Class
+        class_name_to_variable_name(class_or_to_s)
+
+      when Regexp
+        class_or_to_s
+
+      else
+        class_or_to_s.to_s
       end
     end
 

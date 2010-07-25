@@ -9,7 +9,7 @@ describe FactoryGirl::Proxy::Stub do
     stub(@instance).id { 42 }
     stub(@instance).reload { @instance.connection.reload }
 
-    @stub = FactoryGirl::Proxy::Stub.new(@class)
+    @stub = FactoryGirl::Proxy::Stub.new(@class, [])
   end
 
   it "should not be a new record" do
@@ -30,7 +30,7 @@ describe FactoryGirl::Proxy::Stub do
     describe "when asked to associate with another factory" do
       before do
         stub(@instance).owner { @user }
-        mock(@associated_factory).run(FactoryGirl::Proxy::Stub, {}) { @user }
+        mock(@associated_factory).run(FactoryGirl::Proxy::Stub, :user, {}) { @user }
         mock(@stub).set(:owner, @user)
 
         @stub.associate(:owner, :user, {})
@@ -42,7 +42,7 @@ describe FactoryGirl::Proxy::Stub do
     end
 
     it "should return the association when building one" do
-      mock(@associated_factory).run(FactoryGirl::Proxy::Stub, {}) { @user }
+      mock(@associated_factory).run(FactoryGirl::Proxy::Stub, :user, {}) { @user }
       @stub.association(:user).should == @user
     end
 
