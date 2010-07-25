@@ -1,5 +1,7 @@
 module FactoryGirlStepHelpers
   def convert_association_string_to_instance(factory_name, assignment)
+    return nil if assignment.nil?
+
     attribute, value = assignment.split(':', 2)
     return if value.blank?
     attributes = convert_human_hash_to_attribute_hash(attribute => value.strip)
